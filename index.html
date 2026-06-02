@@ -3,226 +3,498 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI农产品病虫害智能识别与数据中心</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>AI 农产品病虫害智能识别与大数据分析系统</title>
     <style>
-        .view-panel { display: none; }
+        /* 基础变量与全局重置 */
+        :root {
+            --primary-color: #2e7d32;     /* 农业绿 */
+            --primary-light: #e8f5e9;    /* 浅绿背景 */
+            --accent-color: #f57c00;     /* 警告橙 */
+            --bg-color: #f4f6f5;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --danger: #d32f2f;
+            --border-radius: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; padding-bottom: 60px; }
+
+        /* 顶部导航 */
+        header { background-color: var(--primary-color); color: white; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 100; }
+        .header-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .header-container h1 { font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; }
+        .pc-nav { display: none; gap: 1.5rem; list-style: none; }
+        .pc-nav li { cursor: pointer; opacity: 0.8; transition: 0.2s; font-size: 0.95rem; padding: 0.2rem 0.5rem; }
+        .pc-nav li:hover, .pc-nav li.active { opacity: 1; border-bottom: 2px solid white; font-weight: bold; }
+
+        /* 核心视图容器 */
+        .view-panel { display: none; max-width: 1200px; margin: 0 auto; width: 100%; padding: 1rem; animation: fadeIn 0.35s ease-in-out; }
         .view-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* === 首页/识别面板组件 === */
+        .marquee-box { background: #fff3e0; color: var(--accent-color); padding: 0.6rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; font-weight: bold; }
+        .main-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+        
+        .upload-card { background: var(--card-bg); border-radius: var(--border-radius); padding: 2.5rem 1rem; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border: 2px dashed #bdc3c7; transition: 0.3s; cursor: pointer; }
+        .upload-card:hover { border-color: var(--primary-color); background-color: var(--primary-light); }
+        .upload-icon { font-size: 3.5rem; color: var(--primary-color); margin-bottom: 0.5rem; display: block; }
+        #file-input { display: none; }
+
+        /* 快速选择区 */
+        .crop-tags-section { background: var(--card-bg); border-radius: var(--border-radius); padding: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+        .section-title { font-size: 1.05rem; margin-bottom: 0.8rem; color: var(--text-main); display: flex; align-items: center; gap: 0.4rem; border-left: 4px solid var(--primary-color); padding-left: 0.5rem; }
+        .crop-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .tag { background: #f0f2f1; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; color: #555; cursor: pointer; transition: 0.2s; }
+        .tag:hover { background: var(--primary-color); color: white; }
+
+        /* 诊断动态 */
+        .news-section { background: var(--card-bg); border-radius: var(--border-radius); padding: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+        .news-list { list-style: none; }
+        .news-item { padding: 0.6rem 0; border-bottom: 1px solid #edf2f7; font-size: 0.85rem; display: flex; justify-content: space-between; color: #555; }
+        .news-item:last-child { border-bottom: none; }
+        .status-badge { color: var(--primary-color); font-weight: bold; }
+
+        /* 结果展示与加载 */
+        .result-section { display: none; background: var(--card-bg); border-radius: var(--border-radius); padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .result-container { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        .preview-img { width: 100%; max-width: 400px; border-radius: 8px; margin: 0 auto; display: block; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .result-title { color: var(--danger); border-bottom: 2px solid #edf2f7; padding-bottom: 0.5rem; margin-bottom: 1rem; font-size: 1.3rem; }
+        .advice-list { background-color: #fffde7; padding: 1rem; border-radius: 8px; border-left: 4px solid #fbc02d; margin-top: 1rem; }
+        .btn { background-color: var(--primary-color); color: white; border: none; padding: 0.8rem 1.5rem; font-size: 1rem; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 1rem; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); }
+        
+        .loader { display: none; text-align: center; padding: 3rem 1rem; background: white; border-radius: var(--border-radius); }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* === 数据分析与图表卡片布局 === */
+        .analytics-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .chart-card { background: white; border-radius: var(--border-radius); padding: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.04); text-align: center; }
+        .chart-container { position: relative; width: 100%; display: flex; justify-content: center; align-items: center; margin-top: 0.5rem; }
+        
+        /* 纯 CSS 模拟柱状图 */
+        .bar-chart { width: 100%; height: 180px; display: flex; align-items: flex-end; justify-content: space-around; padding-top: 20px; }
+        .bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; }
+        .bar { width: 30px; background: linear-gradient(to top, var(--primary-color), var(--primary-light)); border-radius: 4px 4px 0 0; transition: height 1s ease; position: relative; }
+        .bar::before { content: attr(data-value); position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; font-weight: bold; color: var(--text-main); }
+        .bar-label { font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; }
+
+        /* === 记录历史面板 === */
+        .history-list { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem; }
+        .history-card { background: white; border-radius: var(--border-radius); padding: 1rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .history-info { flex: 1; }
+        .history-info h4 { font-size: 0.95rem; margin-bottom: 0.2rem; }
+        .history-info p { font-size: 0.75rem; color: var(--text-muted); }
+        .history-status { font-size: 0.8rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold; }
+        .status-danger { background: #ffebee; color: #c62828; }
+        .status-success { background: #e8f5e9; color: #2e7d32; }
+
+        /* === 我的个人中心 === */
+        .user-hero { background: linear-gradient(135deg, var(--primary-color), var(--primary-light)); color: white; padding: 1.5rem; border-radius: var(--border-radius); display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .avatar { width: 65px; height: 65px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.4); background: #fff; font-size: 2rem; display: flex; align-items: center; justify-content: center; }
+        .user-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; margin-bottom: 1rem; }
+        .stat-card { background: white; padding: 1rem; border-radius: var(--border-radius); text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .stat-card .num { font-size: 1.4rem; font-weight: bold; color: var(--primary-color); }
+        .stat-card .label { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem; }
+        .menu-list { background: white; border-radius: var(--border-radius); list-style: none; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .menu-item { padding: 1rem; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; font-size: 0.9rem; cursor: pointer; }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:active { background: #f9f9f9; }
+
+        /* 移动端固定底部导航 */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.06); display: flex; justify-content: space-around; padding: 0.5rem 0; z-index: 100; }
+        .nav-item { text-align: center; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .nav-item.active { color: var(--primary-color); font-weight: bold; }
+        .nav-icon { font-size: 1.4rem; margin-bottom: 1px; }
+
+        /* PC端大屏响应式适配 (大于 768px) */
+        @media (min-width: 768px) {
+            body { padding-bottom: 0; }
+            header { padding: 1rem 2rem; }
+            header h1 { font-size: 1.4rem; }
+            .pc-nav { display: flex; }
+            .bottom-nav { display: none; }
+            .view-panel { padding: 2rem 1rem; }
+            
+            /* 双栏并行布局 */
+            .main-grid { grid-template-columns: 1.2fr 1fr; align-items: flex-start; gap: 1.5rem; }
+            .result-container { grid-template-columns: 1fr 1fr; align-items: center; }
+            .analytics-grid { grid-template-columns: 1fr 1fr; }
+            .history-list { grid-template-columns: repeat(2, 1fr); display: grid; }
+            .user-grid { grid-template-columns: repeat(4, 1fr); }
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen pb-16 md:pb-0">
+<body>
 
-    <script>
-        // 核心配置：连接到你部署在 Vercel 的后端 
-        const BACKEND_URL = "https://agri-backend-beta.vercel.app";
-    </script>
-
-    <header class="bg-emerald-700 text-white shadow-md sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-3.5 flex justify-between items-center">
-            <h1 class="text-lg font-bold flex items-center gap-2">🌱 智慧农业 AI 智能诊断系统</h1>
-            <ul class="hidden md:flex gap-6 text-sm font-medium">
-                <li class="cursor-pointer hover:text-emerald-200 transition border-b-2 border-white pb-1 font-bold" onclick="switchTab('home')">智能识别</li>
-                <li class="cursor-pointer hover:text-emerald-200 transition pb-1" onclick="switchTab('records')">数据中心</li>
-                <li class="cursor-pointer hover:text-emerald-200 transition pb-1" onclick="switchTab('user')">个人中心</li>
+    <header>
+        <div class="header-container">
+            <h1>🌱 农产品 AI 智能诊断与数据中心</h1>
+            <ul class="pc-nav">
+                <li class="active" onclick="switchTab('home')">智能识别</li>
+                <li onclick="switchTab('records')">数据分析与记录</li>
+                <li onclick="switchTab('user')">个人中心</li>
             </ul>
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto p-4">
+    <div class="view-panel active" id="view-home">
+        <div class="marquee-box">
+            <span>⚠️ 实时预警：</span>
+            <marquee scrollamount="4">当前南方多雨地区需注意预防水稻稻瘟病；华北小麦条锈病进入高发期，请广大农户加强巡田。</marquee>
+        </div>
+
+        <div class="main-grid">
+            <div class="panel-left">
+                <div class="upload-card" id="upload-card" onclick="document.getElementById('file-input').click()">
+                    <span class="upload-icon">📸</span>
+                    <h3>点击拍照 或 上传作物病害叶片</h3>
+                    <p style="color: var(--text-muted); margin-top: 0.6rem; font-size: 0.85rem;">支持黄豆、小麦、玉米、水晶梨等24种大田及果蔬作物</p>
+                    <input type="file" id="file-input" accept="image/*">
+                </div>
+                
+                <div class="loader" id="loader">
+                    <div class="spinner"></div>
+                    <p style="color: var(--primary-color); font-weight: bold;">AI 云端大脑正在多维度提取特征...</p>
+                    <p style="color: #999; font-size: 0.8rem; margin-top: 0.3rem;">正在抽取：孢子颜色、边缘锯齿、叶片脉络纹理...</p>
+                </div>
+
+                <div class="result-section" id="result-section">
+                    <h2 class="result-title">🚨 识别结果：小麦条锈病</h2>
+                    
+                    <div class="result-container">
+                        <div>
+                            <img src="" alt="预览图" class="preview-img" id="preview-img">
+                            <p style="margin-top:0.8rem;"><strong>置信概率：</strong> <span style="color: var(--danger); font-weight: bold; font-size: 1.2rem;">97.5%</span></p>
+                            <p style="font-size:0.9rem; color:#555; margin-top:0.4rem;"><strong>发病特征：</strong> 主要发生在叶片上，病斑呈虚线状排列的鲜黄色粉疱，俗称“条锈成行”。</p>
+                        </div>
+                        
+                        <div class="chart-card" style="box-shadow:none; border: 1px solid #edf2f7;">
+                            <h4 style="font-size:0.85rem; color:var(--text-main); margin-bottom:0.5rem;">🧠 AI 病斑多特征匹配度 (六边形)</h4>
+                            <canvas id="matchRadarCanvas" width="260" height="230"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="advice-list">
+                        <h3 style="color: #e65100;">💡 专家防治方案：</h3>
+                        <ul style="margin-left: 1.2rem; margin-top: 0.4rem; line-height: 1.6; font-size: 0.9rem;">
+                            <li><strong>化学药剂：</strong> 每亩用 20% 三唑酮乳油 50-70 毫升，兑水 50 公斤均匀喷雾。</li>
+                            <li><strong>跟进提醒：</strong> 重病区隔 7-10 天需再次喷药防治，注意叶片正反面均要喷到。</li>
+                        </ul>
+                    </div>
+                    <button class="btn" style="background-color: #555;" onclick="resetSystem()">返回重新识别</button>
+                </div>
+            </div>
+
+            <div class="panel-right" id="home-extend-zone">
+                <div class="crop-tags-section" style="margin-bottom: 1rem;">
+                    <h3 class="section-title">🌾 热门诊断作物</h3>
+                    <div class="crop-tags">
+                        <span class="tag" onclick="alert('请在上方上传对应水稻照片')">水稻</span>
+                        <span class="tag" onclick="alert('请在上方上传对应小麦照片')">小麦</span>
+                        <span class="tag" onclick="alert('请在上方上传对应玉米照片')">玉米</span>
+                        <span class="tag" onclick="alert('请在上方上传对应大豆照片')">黄豆</span>
+                        <span class="tag" onclick="alert('请在上方上传对应苹果照片')">苹果</span>
+                    </div>
+                </div>
+
+                <div class="news-section">
+                    <h3 class="section-title">📊 全国实时诊断动态</h3>
+                    <ul class="news-list">
+                        <li class="news-item"><span>山东潍坊农户*师傅诊断了[小麦]</span><span class="status-badge">完成</span></li>
+                        <li class="news-item"><span>黑龙江绥化农户*女士诊断了[大豆]</span><span class="status-badge">完成</span></li>
+                        <li class="news-item"><span>河南商丘农户*师傅诊断了[玉米]</span><span class="status-badge">完成</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="view-panel" id="view-records">
         
-        <div class="view-panel active" id="view-home">
-            <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-lg text-sm mb-4 flex items-center gap-2 font-semibold">
-                <span>🔔 实时预警:</span>
-                <marquee scrollamount="4">当前区域小麦条锈病高发，请及时上传照片进行AI筛查。</marquee>
+        <div class="analytics-grid">
+            <div class="chart-card">
+                <h3 class="section-title">📊 本月农场全景健康度分析</h3>
+                <div class="chart-container">
+                    <canvas id="farmRadarCanvas" width="280" height="240"></canvas>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="md:col-span-2 space-y-4">
-                    <div id="upload-card" onclick="document.getElementById('file-input').click()" class="bg-white border-2 border-dashed border-gray-300 hover:border-emerald-600 hover:bg-emerald-50/30 rounded-xl p-8 text-center shadow-sm transition duration-300 cursor-pointer">
-                        <span class="text-5xl inline-block">📸</span>
-                        <h3 class="mt-4 text-base font-bold text-gray-700">点击拍照或上传病害植物叶片</h3>
-                        <p class="mt-2 text-xs text-gray-400">支持 JPG/PNG 格式，单张最大 5MB</p>
-                        <input type="file" id="file-input" accept="image/*" class="hidden">
+            <div class="chart-card">
+                <h3 class="section-title">📈 近期作物发病频次统计</h3>
+                <div class="bar-chart">
+                    <div class="bar-group">
+                        <div class="bar" style="height: 120px;" data-value="8次"></div>
+                        <div class="bar-label">小麦</div>
                     </div>
-
-                    <div id="loader" class="hidden bg-white rounded-xl p-12 text-center shadow-sm border border-gray-100">
-                        <div class="w-12 h-12 border-4 border-gray-200 border-t-emerald-600 rounded-full animate-spin mx-auto"></div>
-                        <h4 class="mt-4 font-bold text-emerald-700">正在调用云端 AI 算力进行实时识别...</h4>
+                    <div class="bar-group">
+                        <div class="bar" style="height: 60px;" data-value="4次"></div>
+                        <div class="bar-label">水稻</div>
                     </div>
-
-                    <div id="result-section" class="hidden bg-white rounded-xl p-6 shadow-md border border-gray-100">
-                        <div class="border-b border-gray-100 pb-3 mb-4 flex justify-between items-center">
-                            <h2 class="text-xl font-bold text-red-600 flex items-center gap-1">🚨 诊断结果：<span id="res-disease">正在获取...</span></h2>
-                            <span class="text-xs text-gray-400" id="res-time"></span>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                            <img src="" id="preview-img" class="w-full max-h-64 object-cover rounded-lg shadow-inner" alt="上传图片">
-                            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                <h4 class="text-xs font-bold text-gray-500 mb-3 text-center">🧠 AI 深度学习模型特征分析报告</h4>
-                                <canvas id="matchRadarCanvas" width="240" height="200" class="mx-auto"></canvas>
-                                <p class="mt-3 text-center text-sm font-bold">综合置信度: <span id="res-confidence" class="text-emerald-600">--</span></p>
-                            </div>
-                        </div>
-                        <div class="mt-5 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
-                            <h3 class="font-bold text-amber-800">💡 专家防治建议：</h3>
-                            <ul id="res-advice" class="mt-2 text-sm text-gray-700 space-y-2 list-disc pl-4 leading-relaxed"></ul>
-                        </div>
-                        <button onclick="resetSystem()" class="w-full mt-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg transition shadow-md">完成，继续下一次诊断</button>
+                    <div class="bar-group">
+                        <div class="bar" style="height: 90px;" data-value="6次"></div>
+                        <div class="bar-label">玉米</div>
                     </div>
-                </div>
-
-                <div class="space-y-4">
-                    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                        <h3 class="font-bold text-gray-700 border-l-4 border-emerald-600 pl-2 text-sm mb-3">🌾 系统支持作物库</h3>
-                        <div class="flex flex-wrap gap-2">
-                            <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full font-medium">小麦</span>
-                            <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full font-medium">玉米</span>
-                            <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full font-medium">水稻</span>
-                            <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full font-medium">苹果</span>
-                        </div>
+                    <div class="bar-group">
+                        <div class="bar" style="height: 30px;" data-value="2次"></div>
+                        <div class="bar-label">大豆</div>
+                    </div>
+                    <div class="bar-group">
+                        <div class="bar" style="height: 45px;" data-value="3次"></div>
+                        <div class="bar-label">果树</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="view-panel" id="view-records">
-            <h3 class="font-bold text-gray-700 border-l-4 border-emerald-600 pl-2 text-lg mb-6 text-center">📅 云端数据库存储的历史识别记录</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="history-container">
+        <h3 class="section-title" style="margin-top: 1.5rem;">📝 详细诊断历史报告</h3>
+        <div class="history-list">
+            <div class="history-card">
+                <div style="font-size: 2rem;">🌾</div>
+                <div class="history-info">
+                    <h4>小麦 - 疑似条锈病</h4>
+                    <p>检测时间：2026-06-01 14:32</p>
                 </div>
-        </div>
-
-        <div class="view-panel" id="view-user">
-            <div class="bg-emerald-700 rounded-xl p-8 text-white text-center shadow-lg">
-                <div class="w-20 h-20 bg-white/20 rounded-full mx-auto flex items-center justify-center text-4xl mb-4 border-2 border-white/30">👨‍🌾</div>
-                <h3 class="text-xl font-bold">智慧农场主</h3>
-                <p class="text-emerald-100 mt-2 text-sm">账号：yc_agriculture_2026</p>
-                <div class="mt-6 inline-flex bg-white/10 px-4 py-2 rounded-full text-xs">实名认证：已通过</div>
+                <span class="history-status status-danger">高危病害</span>
+            </div>
+            <div class="history-card">
+                <div style="font-size: 2rem;">🍏</div>
+                <div class="history-info">
+                    <h4>苹果 - 正常健康叶片</h4>
+                    <p>检测时间：2026-05-28 09:15</p>
+                </div>
+                <span class="history-status status-success">健康</span>
+            </div>
+            <div class="history-card">
+                <div style="font-size: 2rem;">🌽</div>
+                <div class="history-info">
+                    <h4>玉米 - 大斑病</h4>
+                    <p>检测时间：2026-05-20 18:02</p>
+                </div>
+                <span class="history-status status-danger">轻度</span>
             </div>
         </div>
-    </main>
+    </div>
 
-    <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 shadow-2xl flex justify-around py-3 z-50">
-        <div onclick="switchTab('home')" class="flex flex-col items-center text-xs text-emerald-600 font-bold"><span>🏠</span><span>识别</span></div>
-        <div onclick="switchTab('records')" class="flex flex-col items-center text-xs text-gray-400"><span>📊</span><span>数据</span></div>
-        <div onclick="switchTab('user')" class="flex flex-col items-center text-xs text-gray-400"><span>👨‍🌾</span><span>我的</span></div>
-    </nav>
+
+    <div class="view-panel" id="view-user">
+        <div class="user-hero">
+            <div class="avatar">👨‍🌾</div>
+            <div>
+                <h3 style="margin-bottom: 0.2rem;">老张的生态农场</h3>
+                <p style="font-size: 0.85rem; opacity: 0.9;">身份认证：高级粮农 | 系统版本：2026版</p>
+            </div>
+        </div>
+
+        <div class="user-grid">
+            <div class="stat-card"><div class="num">120 亩</div><div class="label">种植面积</div></div>
+            <div class="stat-card"><div class="num">18 次</div><div class="label">总累计诊断</div></div>
+            <div class="stat-card"><div class="num">2 台</div><div class="label">物联监控</div></div>
+            <div class="stat-card"><div class="num">92 分</div><div class="label">农场综合评分</div></div>
+        </div>
+
+        <ul class="menu-list">
+            <li class="menu-item" onclick="alert('正在呼叫对口植保站专家...')"><span>📞 预约本地一键农技专家支持</span><span style="color:#ccc;">&gt;</span></li>
+            <li class="menu-item" onclick="alert('正在获取周围5公里合规绿色农资店...')"><span>🛒 附近正品农药直销通道</span><span style="color:#ccc;">&gt;</span></li>
+            <li class="menu-item" onclick="alert('版本号 V4.0.0 (2026) 已是最新版')"><span>⚙️ 系统设置与模型库升级</span><span style="color:#ccc;">&gt;</span></li>
+        </ul>
+    </div>
+
+
+    <div class="bottom-nav">
+        <div class="nav-item active" id="tab-home" onclick="switchTab('home')">
+            <span class="nav-icon">🏠</span>
+            <span>智能识别</span>
+        </div>
+        <div class="nav-item" id="tab-records" onclick="switchTab('records')">
+            <span class="nav-icon">📊</span>
+            <span>数据分析</span>
+        </div>
+        <div class="nav-item" id="tab-user" onclick="switchTab('user')">
+            <span class="nav-icon">👨‍🌾</span>
+            <span>个人中心</span>
+        </div>
+    </div>
 
     <script>
-        function switchTab(tab) {
+        const fileInput = document.getElementById('file-input');
+        const uploadCard = document.getElementById('upload-card');
+        const loader = document.getElementById('loader');
+        const resultSection = document.getElementById('result-section');
+        const previewImg = document.getElementById('preview-img');
+        const homeExtendZone = document.getElementById('home-extend-zone');
+
+        /**
+         * 1. 切换 Tab 视图
+         */
+        function switchTab(targetTab) {
             document.querySelectorAll('.view-panel').forEach(el => el.classList.remove('active'));
-            document.getElementById(`view-${tab}`).classList.add('active');
-            if (tab === 'records') fetchHistory();
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.pc-nav li').forEach(el => el.classList.remove('active'));
+
+            const targetPanel = document.getElementById(`view-${targetTab}`);
+            if (targetPanel) targetPanel.classList.add('active');
+
+            const mobTab = document.getElementById(`tab-${targetTab}`);
+            if (mobTab) mobTab.classList.add('active');
+
+            const pcTabs = document.querySelectorAll('.pc-nav li');
+            if (targetTab === 'home' && pcTabs[0]) pcTabs[0].classList.add('active');
+            if (targetTab === 'records' && pcTabs[1]) {
+                pcTabs[1].classList.add('active');
+                // 切换到分析页时延迟重绘农场大盘雷达图，确保容器有实体高宽
+                setTimeout(() => drawRadarChart("farmRadarCanvas", farmMetrics), 50);
+            }
+            if (targetTab === 'user' && pcTabs[2]) pcTabs[2].classList.add('active');
         }
 
-        // 核心逻辑：调用后端 API 进行诊断 
-        document.getElementById('file-input').addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+        /**
+         * 2. 上传和AI识别核心过程
+         */
+        fileInput.addEventListener('change', function(event) {
+            if (event.target.files && event.target.files[0]) {
+                const file = event.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    uploadCard.style.display = 'none';
+                    if(homeExtendZone) homeExtendZone.style.display = 'none';
+                    loader.style.display = 'block';
+                    resultSection.style.display = 'none';
 
-            // 界面切换到加载状态
-            document.getElementById('upload-card').classList.add('hidden');
-            document.getElementById('loader').classList.remove('hidden');
+                    previewImg.src = e.target.result;
 
-            const formData = new FormData();
-            formData.append('crop_image', file);
-
-            try {
-                // 发送 POST 请求到 Vercel 后端 
-                const response = await fetch(`${BACKEND_URL}/api/diagnose`, {
-                    method: 'POST',
-                    body: formData
-                });
-                const result = await response.json();
-
-                if (result.success) {
-                    const data = result.data;
-                    // 更新界面显示诊断结果 [cite: 12, 13]
-                    document.getElementById('res-disease').innerText = data.disease;
-                    document.getElementById('res-confidence').innerText = data.confidence;
-                    document.getElementById('res-time').innerText = data.time;
-                    document.getElementById('preview-img').src = data.imageUrl;
-
-                    // 渲染专家建议 
-                    const adviceUl = document.getElementById('res-advice');
-                    adviceUl.innerHTML = data.advice.map(item => `<li>${item}</li>`).join('');
-
-                    // 绘制雷达图 
-                    drawRadarChart(data.features);
-
-                    document.getElementById('loader').classList.add('hidden');
-                    document.getElementById('result-section').classList.remove('hidden');
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                        resultSection.style.display = 'block';
+                        // 渲染单次病斑诊断的匹配特征雷达图
+                        drawRadarChart("matchRadarCanvas", diseaseMatchMetrics);
+                    }, 1800);
                 }
-            } catch (err) {
-                alert("连接云端失败，请检查 Vercel 地址是否正确！");
-                resetSystem();
+                reader.readAsDataURL(file);
             }
         });
 
-        // 获取历史记录 
-        async function fetchHistory() {
-            const container = document.getElementById('history-container');
-            container.innerHTML = '<p class="text-center col-span-2 text-gray-400 py-10">正在从云端读取历史轨迹...</p>';
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/records`);
-                const result = await response.json();
-                if (result.success) {
-                    container.innerHTML = result.data.map(item => `
-                        <div class="bg-white p-4 rounded-xl flex items-center gap-4 shadow-sm border border-gray-100">
-                            <img src="${item.imageUrl}" class="w-16 h-16 object-cover rounded-md border"/>
-                            <div class="flex-1">
-                                <h4 class="font-bold text-gray-800 text-sm">${item.crop} - ${item.disease}</h4>
-                                <p class="text-[10px] text-gray-400 mt-1">${item.time}</p>
-                            </div>
-                            <span class="text-xs px-2 py-1 rounded font-bold ${item.status === '高危病害' ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}">${item.status}</span>
-                        </div>
-                    `).join('');
-                }
-            } catch (err) {
-                container.innerHTML = '<p class="text-center col-span-2 text-red-400">读取云端数据失败</p>';
-            }
-        }
-
         function resetSystem() {
-            document.getElementById('file-input').value = "";
-            document.getElementById('result-section').classList.add('hidden');
-            document.getElementById('loader').classList.add('hidden');
-            document.getElementById('upload-card').classList.remove('hidden');
+            fileInput.value = ''; 
+            resultSection.style.display = 'none';
+            loader.style.display = 'none';
+            uploadCard.style.display = 'block';
+            if(homeExtendZone) homeExtendZone.style.display = 'block';
         }
 
-        function drawRadarChart(features) {
-            const canvas = document.getElementById('matchRadarCanvas');
+        /**
+         * 3. HTML5 Canvas 绘制高级六边形雷达图引擎
+         */
+        const farmMetrics = {
+            titles: ["作物丰产度", "土壤肥力", "病害控制率", "虫害防御度", "灌溉效率", "气候适应"],
+            values: [85, 70, 90, 65, 80, 75],
+            color: "rgba(46, 125, 50, 1)",
+            fillColor: "rgba(46, 125, 50, 0.25)"
+        };
+
+        const diseaseMatchMetrics = {
+            titles: ["孢子颜色", "斑块面积", "病斑轮廓", "脉络浸润", "边缘坏死", "组织凹陷"],
+            values: [98, 85, 92, 70, 88, 60],
+            color: "rgba(211, 47, 47, 1)",
+            fillColor: "rgba(211, 47, 47, 0.2)"
+        };
+
+        function drawRadarChart(canvasId, data) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
             const ctx = canvas.getContext('2d');
-            const centerX = 120, centerY = 100, radius = 60;
-            ctx.clearRect(0,0,240,200);
+            
+            // 像素比适配防模糊处理
+            const width = canvas.width;
+            const height = canvas.height;
+            ctx.clearRect(0, 0, width, height);
 
-            // 绘制底网
-            ctx.strokeStyle = '#e2e8f0';
-            for(let j=1; j<=4; j++) {
+            const centerX = width / 2;
+            const centerY = height / 2 + 10;
+            const radius = Math.min(width, height) * 0.34;
+            const totalSides = 6; // 六边形
+
+            // A. 绘制多层嵌套背景六边形网络
+            for (let level = 4; level > 0; level--) {
+                const currentRadius = radius * (level / 4);
                 ctx.beginPath();
-                for(let i=0; i<6; i++) {
-                    const angle = i * Math.PI / 3 - Math.PI/2;
-                    ctx.lineTo(centerX + radius * (j/4) * Math.cos(angle), centerY + radius * (j/4) * Math.sin(angle));
+                for (let i = 0; i < totalSides; i++) {
+                    const angle = (i * 2 * Math.PI / totalSides) - Math.PI / 2;
+                    const x = centerX + currentRadius * Math.cos(angle);
+                    const y = centerY + currentRadius * Math.sin(angle);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
                 }
-                ctx.closePath(); ctx.stroke();
+                ctx.closePath();
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                // 填充交替底纹
+                if(level % 2 === 0) {
+                    ctx.fillStyle = '#fdfdfd';
+                    ctx.fill();
+                }
             }
 
-            // 绘制数据区域
+            // B. 绘制散射轴线与文字标签
+            ctx.font = '11px sans-serif';
+            ctx.fillStyle = '#4a5568';
+            ctx.textAlign = 'center';
+
+            for (let i = 0; i < totalSides; i++) {
+                const angle = (i * 2 * Math.PI / totalSides) - Math.PI / 2;
+                // 轴线
+                const lineX = centerX + radius * Math.cos(angle);
+                const lineY = centerY + radius * Math.sin(angle);
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(lineX, lineY);
+                ctx.strokeStyle = '#edf2f7';
+                ctx.stroke();
+
+                // 绘制文本标签（适当向外平移，避免和图层重叠）
+                const textX = centerX + (radius + 18) * Math.cos(angle);
+                const textY = centerY + (radius + 12) * Math.sin(angle) + 4;
+                ctx.fillText(data.titles[i], textX, textY);
+            }
+
+            // C. 绘制实际农情、病斑诊断数据覆盖层
             ctx.beginPath();
-            ctx.fillStyle = 'rgba(5, 150, 105, 0.2)';
-            ctx.strokeStyle = '#059669';
-            for(let i=0; i<6; i++) {
-                const angle = i * Math.PI / 3 - Math.PI/2;
-                const val = features.values[i] / 100;
-                ctx.lineTo(centerX + radius * val * Math.cos(angle), centerY + radius * val * Math.sin(angle));
+            for (let i = 0; i < totalSides; i++) {
+                const angle = (i * 2 * Math.PI / totalSides) - Math.PI / 2;
+                const valueFactor = data.values[i] / 100;
+                const dataX = centerX + radius * valueFactor * Math.cos(angle);
+                const dataY = centerY + radius * valueFactor * Math.sin(angle);
+                if (i === 0) ctx.moveTo(dataX, dataY);
+                else ctx.lineTo(dataX, dataY);
             }
-            ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.closePath();
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            ctx.fillStyle = data.fillColor;
+            ctx.fill();
 
-            // 绘制文字
-            ctx.fillStyle = '#64748b'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
-            for(let i=0; i<6; i++) {
-                const angle = i * Math.PI / 3 - Math.PI/2;
-                ctx.fillText(features.titles[i], centerX + (radius+15) * Math.cos(angle), centerY + (radius+15) * Math.sin(angle) + 5);
+            // D. 在每个数据点上画上实心小圆点
+            for (let i = 0; i < totalSides; i++) {
+                const angle = (i * 2 * Math.PI / totalSides) - Math.PI / 2;
+                const valueFactor = data.values[i] / 100;
+                const dataX = centerX + radius * valueFactor * Math.cos(angle);
+                const dataY = centerY + radius * valueFactor * Math.sin(angle);
+                ctx.beginPath();
+                ctx.arc(dataX, dataY, 3.5, 0, 2 * Math.PI);
+                ctx.fillStyle = data.color;
+                ctx.fill();
             }
+        }
+
+        // 初始化时首次载入图表
+        window.onload = function() {
+            // 如果初始是首页，结果页未打开时暂时不画病斑雷达图。当识别成功后自动触发渲染
         }
     </script>
 </body>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>农业产品病虫害自动识别系统</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Microsoft YaHei";
+}
+
+body{
+    background:#f5f6fa;
+}
+
+.header{
+    height:70px;
+    background:#2E8B57;
+    color:white;
+    text-align:center;
+    line-height:70px;
+    font-size:28px;
+    font-weight:bold;
+}
+
+.container{
+    display:flex;
+    height:calc(100vh - 70px);
+}
+
+.sidebar{
+    width:220px;
+    background:#34495e;
+    color:white;
+}
+
+.sidebar ul{
+    list-style:none;
+}
+
+.sidebar li{
+    padding:18px;
+    border-bottom:1px solid #4a6278;
+    cursor:pointer;
+}
+
+.sidebar li:hover{
+    background:#2c3e50;
+}
+
+.main{
+    flex:1;
+    padding:20px;
+}
+
+.card{
+    background:white;
+    border-radius:10px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.upload-box{
+    border:2px dashed #aaa;
+    height:220px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:#666;
+    font-size:18px;
+}
+
+.btn{
+    margin-top:15px;
+    padding:10px 25px;
+    background:#2E8B57;
+    color:white;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+}
+
+.btn:hover{
+    background:#228B22;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+table th,
+table td{
+    border:1px solid #ddd;
+    padding:12px;
+    text-align:center;
+}
+
+table th{
+    background:#2E8B57;
+    color:white;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    农业产品病虫害自动识别系统
+</div>
+
+<div class="container">
+
+    <div class="sidebar">
+        <ul>
+            <li>首页</li>
+            <li>图片上传</li>
+            <li>病虫害识别</li>
+            <li>病害详情</li>
+            <li>防治建议</li>
+            <li>历史记录</li>
+            <li>系统设置</li>
+        </ul>
+    </div>
+
+    <div class="main">
+
+        <div class="card">
+            <h2>图片上传</h2>
+            <br>
+
+            <div class="upload-box">
+                点击上传或拖拽图片到此区域
+            </div>
+
+            <button class="btn">开始识别</button>
+        </div>
+
+        <div class="card">
+            <h2>识别结果</h2>
+            <br>
+
+            <table>
+                <tr>
+                    <th>项目</th>
+                    <th>结果</th>
+                </tr>
+
+                <tr>
+                    <td>作物名称</td>
+                    <td>水晶梨</td>
+                </tr>
+
+                <tr>
+                    <td>病虫害名称</td>
+                    <td>梨黑星病</td>
+                </tr>
+
+                <tr>
+                    <td>识别准确率</td>
+                    <td>96.8%</td>
+                </tr>
+
+                <tr>
+                    <td>病害等级</td>
+                    <td>中度感染</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>防治建议</h2>
+            <br>
+
+            <p>① 清除病叶和病果</p>
+            <br>
+
+            <p>② 加强果园通风透光</p>
+            <br>
+
+            <p>③ 定期喷洒杀菌剂进行防治</p>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

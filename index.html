@@ -1,194 +1,169 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>农业产品病虫害自动识别系统</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 农产品病虫害识别系统</title>
+    <style>
+        /* 基础变量与全局重置 */
+        :root {
+            --primary-color: #2e7d32; /* 农业绿 */
+            --primary-light: #60ad5e;
+            --bg-color: #f5f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #777777;
+            --danger: #d32f2f;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; }
 
-<style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:"Microsoft YaHei";
-}
+        /* 顶部导航 */
+        header { background-color: var(--primary-color); color: white; padding: 1rem; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 10; }
+        header h1 { font-size: 1.2rem; }
 
-body{
-    background:#f5f6fa;
-}
+        /* 主体布局 */
+        .container { flex: 1; padding: 1rem; max-width: 1200px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 1rem; margin-bottom: 60px; /* 留出底部导航空间 */ }
 
-.header{
-    height:70px;
-    background:#2E8B57;
-    color:white;
-    text-align:center;
-    line-height:70px;
-    font-size:28px;
-    font-weight:bold;
-}
+        /* 上传卡片区域 */
+        .upload-card { background: var(--card-bg); border-radius: 12px; padding: 2rem; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 2px dashed #ccc; transition: 0.3s; cursor: pointer; }
+        .upload-card:hover { border-color: var(--primary-color); background-color: #f1f8f1; }
+        .upload-icon { font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem; display: block; }
+        #file-input { display: none; }
+        
+        /* 按钮样式 */
+        .btn { background-color: var(--primary-color); color: white; border: none; padding: 0.8rem 1.5rem; font-size: 1rem; border-radius: 8px; cursor: pointer; margin-top: 1rem; width: 100%; max-width: 300px; font-weight: bold; }
+        .btn:active { background-color: #1b5e20; }
 
-.container{
-    display:flex;
-    height:calc(100vh - 70px);
-}
+        /* 结果展示区域 (默认隐藏) */
+        .result-section { display: none; background: var(--card-bg); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .preview-img { width: 100%; max-width: 400px; border-radius: 8px; margin: 0 auto 1rem; display: block; }
+        .result-title { color: var(--danger); border-bottom: 2px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+        .advice-list { background-color: #fff9c4; padding: 1rem; border-radius: 8px; border-left: 4px solid #fbc02d; margin-top: 1rem; }
 
-.sidebar{
-    width:220px;
-    background:#34495e;
-    color:white;
-}
+        /* 正在分析时的加载动画 */
+        .loader { display: none; text-align: center; padding: 2rem; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-.sidebar ul{
-    list-style:none;
-}
+        /* 移动端底部导航 */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-around; padding: 0.5rem 0; z-index: 10; }
+        .nav-item { text-align: center; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; flex: 1; }
+        .nav-item.active { color: var(--primary-color); font-weight: bold; }
+        .nav-icon { font-size: 1.5rem; display: block; margin-bottom: 2px; }
 
-.sidebar li{
-    padding:18px;
-    border-bottom:1px solid #4a6278;
-    cursor:pointer;
-}
-
-.sidebar li:hover{
-    background:#2c3e50;
-}
-
-.main{
-    flex:1;
-    padding:20px;
-}
-
-.card{
-    background:white;
-    border-radius:10px;
-    padding:20px;
-    margin-bottom:20px;
-    box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-.upload-box{
-    border:2px dashed #aaa;
-    height:220px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    color:#666;
-    font-size:18px;
-}
-
-.btn{
-    margin-top:15px;
-    padding:10px 25px;
-    background:#2E8B57;
-    color:white;
-    border:none;
-    border-radius:5px;
-    cursor:pointer;
-}
-
-.btn:hover{
-    background:#228B22;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-table th,
-table td{
-    border:1px solid #ddd;
-    padding:12px;
-    text-align:center;
-}
-
-table th{
-    background:#2E8B57;
-    color:white;
-}
-</style>
+        /* PC端响应式适配 (大于 768px 时触发) */
+        @media (min-width: 768px) {
+            .container { flex-direction: row; align-items: flex-start; margin-bottom: 0; }
+            .bottom-nav { display: none; /* PC端隐藏底部导航 */ }
+            header { text-align: left; padding: 1rem 3rem; display: flex; justify-content: space-between; align-items: center; }
+            /* PC端注入顶部导航菜单 */
+            header::after { content: '首页 | 识别记录 | 农技大厅 | 专家支持'; font-size: 1rem; cursor: pointer; }
+            
+            .left-panel { flex: 1; }
+            .right-panel { flex: 1; }
+            .upload-card { padding: 4rem 2rem; }
+            .btn { width: auto; }
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="header">
-    农业产品病虫害自动识别系统
-</div>
+    <header>
+        <h1>🌱 农产品病虫害AI识别系统</h1>
+    </header>
 
-<div class="container">
-
-    <div class="sidebar">
-        <ul>
-            <li>首页</li>
-            <li>图片上传</li>
-            <li>病虫害识别</li>
-            <li>病害详情</li>
-            <li>防治建议</li>
-            <li>历史记录</li>
-            <li>系统设置</li>
-        </ul>
-    </div>
-
-    <div class="main">
-
-        <div class="card">
-            <h2>图片上传</h2>
-            <br>
-
-            <div class="upload-box">
-                点击上传或拖拽图片到此区域
+    <div class="container">
+        <div class="left-panel" id="upload-panel">
+            <div class="upload-card" onclick="document.getElementById('file-input').click()">
+                <span class="upload-icon">📷</span>
+                <h3>点击拍照 或 上传图片</h3>
+                <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.9rem;">支持黄豆、小麦、水晶梨等常见作物</p>
+                <input type="file" id="file-input" accept="image/*">
             </div>
-
-            <button class="btn">开始识别</button>
+            
+            <div class="loader" id="loader">
+                <div class="spinner"></div>
+                <p>AI云端大脑正在分析叶片特征，请稍候...</p>
+            </div>
         </div>
 
-        <div class="card">
-            <h2>识别结果</h2>
-            <br>
-
-            <table>
-                <tr>
-                    <th>项目</th>
-                    <th>结果</th>
-                </tr>
-
-                <tr>
-                    <td>作物名称</td>
-                    <td>水晶梨</td>
-                </tr>
-
-                <tr>
-                    <td>病虫害名称</td>
-                    <td>梨黑星病</td>
-                </tr>
-
-                <tr>
-                    <td>识别准确率</td>
-                    <td>96.8%</td>
-                </tr>
-
-                <tr>
-                    <td>病害等级</td>
-                    <td>中度感染</td>
-                </tr>
-            </table>
+        <div class="right-panel">
+            <div class="result-section" id="result-section">
+                <img src="https://via.placeholder.com/400x300/2e7d32/ffffff?text=Crop+Image+Preview" alt="预览图" class="preview-img" id="preview-img">
+                
+                <h2 class="result-title">🚨 识别结果：小麦锈病 (条锈病)</h2>
+                <p><strong>置信度：</strong> 97.5%</p>
+                <p><strong>危害部位：</strong> 主要发生在叶片，严重时也危害叶鞘、茎秆和穗部。</p>
+                
+                <div class="advice-list">
+                    <h3>💡 专家防治建议：</h3>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem; line-height: 1.6;">
+                        <li><strong>农业防治：</strong> 选用抗病品种，清除田间自生麦苗。</li>
+                        <li><strong>药剂防治：</strong> 发病初期，可使用 20% 粉锈宁（三唑酮）乳油 1500 倍液进行均匀喷雾。</li>
+                        <li><strong>注意事项：</strong> 喷药时注意天气，避免雨前喷洒。需间隔7-10天再喷一次以巩固防效。</li>
+                    </ul>
+                </div>
+                <button class="btn" style="background-color: #1976d2; margin-top: 1.5rem;" onclick="resetSystem()">重新识别</button>
+            </div>
         </div>
-
-        <div class="card">
-            <h2>防治建议</h2>
-            <br>
-
-            <p>① 清除病叶和病果</p>
-            <br>
-
-            <p>② 加强果园通风透光</p>
-            <br>
-
-            <p>③ 定期喷洒杀菌剂进行防治</p>
-        </div>
-
     </div>
 
-</div>
+    <div class="bottom-nav">
+        <div class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span>识别</span>
+        </div>
+        <div class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span>记录</span>
+        </div>
+        <div class="nav-item">
+            <span class="nav-icon">👨‍🌾</span>
+            <span>我的</span>
+        </div>
+    </div>
 
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const uploadCard = document.querySelector('.upload-card');
+        const loader = document.getElementById('loader');
+        const resultSection = document.getElementById('result-section');
+        const previewImg = document.getElementById('preview-img');
+
+        // 监听文件上传 (交互逻辑)
+        fileInput.addEventListener('change', function(event) {
+            if (event.target.files && event.target.files[0]) {
+                const file = event.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    // 1. 隐藏上传框，显示加载动画
+                    uploadCard.style.display = 'none';
+                    loader.style.display = 'block';
+                    resultSection.style.display = 'none';
+
+                    // 2. 将图片赋值给预览区
+                    previewImg.src = e.target.result;
+
+                    // 3. 模拟AI网络请求延迟 (2秒后出结果)
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                        resultSection.style.display = 'block';
+                    }, 2000);
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 重置系统
+        function resetSystem() {
+            fileInput.value = ''; // 清空文件
+            resultSection.style.display = 'none';
+            uploadCard.style.display = 'block';
+        }
+    </script>
 </body>
 </html>
